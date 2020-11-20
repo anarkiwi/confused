@@ -6,8 +6,6 @@ Files under a specified "fake" tree, will appear preferentially in a real tree, 
 Usage
 =====
 
-.. code-block:: none
-
     pip install -r requirements.txt
     ./confused.py /real/path /mount/point /fake/path
 
