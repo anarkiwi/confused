@@ -3,6 +3,7 @@
 import os
 import sys
 import errno
+import subprocess
 
 from fuse import FUSE, FuseOSError, Operations
 
@@ -146,8 +147,11 @@ class Confused(Operations):
         return self.flush(path, fh)
 
 
-def main(mountpoint, root, fakeroot):
+def main(mountpoint, root, fakeroot, argvs):
     FUSE(Confused(root, fakeroot), mountpoint, nothreads=True, foreground=True)
+    if argvs:
+        process = subprocess.Popen(argvs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process.communicate()
 
 if __name__ == '__main__':
-    main(sys.argv[2], sys.argv[1], sys.argv[3])
+    main(sys.argv[2], sys.argv[1], sys.argv[3], sys.argv[4:])
