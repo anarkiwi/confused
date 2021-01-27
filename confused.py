@@ -148,10 +148,13 @@ class Confused(Operations):
 
 
 def main(mountpoint, root, fakeroot, argvs):
-    FUSE(Confused(root, fakeroot), mountpoint, nothreads=True, foreground=True)
+    ops = Confused(root, fakeroot)
     if argvs:
+        FUSE(ops, mountpoint, nothreads=False, foreground=False)
         process = subprocess.Popen(argvs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         process.communicate()
+    else:
+        FUSE(ops, mountpoint, nothreads=True, foreground=True)
 
 if __name__ == '__main__':
     main(sys.argv[2], sys.argv[1], sys.argv[3], sys.argv[4:])
