@@ -150,7 +150,7 @@ class Confused(Operations):
 def main(mountpoint, root, fakeroot, argvs):
     ops = Confused(root, fakeroot)
     if argvs:
-        FUSE(ops, mountpoint, nothreads=False, foreground=False)
+        FUSE(ops, mountpoint, nothreads=True, foreground=True)
         process = subprocess.Popen(argvs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         process.communicate()
     else:
