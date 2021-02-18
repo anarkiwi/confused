@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
+import argparse
 import os
-import sys
 import errno
-import subprocess
 
 from fuse import FUSE, FuseOSError, Operations
 
 
 class Confused(Operations):
 
-    def __init__(self, root, fakeroot):
+    def __init__(self, root, fakeroot, fakelstat):
         self.root = root
         self.fakeroot = fakeroot
+        self.fakelstat = fakelstat
 
     def _full_path(self, partial, root):
         if partial.startswith('/'):
@@ -45,7 +45,11 @@ class Confused(Operations):
 
     def getattr(self, path, fh=None):
         full_path, fake_path = self._full_paths(path)
-        st = self._fake_wrap(full_path, fake_path, os.lstat)
+        # if fakelstat and both real and fake exist, return lstat of *real* (ie. mtime, etc)
+        if self.fakelstat and os.path.exists(fake_path) and os.path.exists(full_path):
+            st = os.lstat(full_path)
+        else:
+            st = self._fake_wrap(full_path, fake_path, os.lstat)
         return dict((key, getattr(st, key)) for key in ('st_atime', 'st_ctime',
                      'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
 
@@ -147,12 +151,19 @@ class Confused(Operations):
         return self.flush(path, fh)
 
 
-def main(mountpoint, root, fakeroot, argvs):
-    ops = Confused(root, fakeroot)
-    if argvs:
-        FUSE(ops, mountpoint, nothreads=True, foreground=False)
-    else:
-        FUSE(ops, mountpoint, nothreads=True, foreground=True)
+def main(mountpoint, root, fakeroot, foreground, fakelstat):
+    ops = Confused(root, fakeroot, fakelstat)
+    FUSE(ops, mountpoint, nothreads=True, foreground=foreground)
 
 if __name__ == '__main__':
-    main(sys.argv[2], sys.argv[1], sys.argv[3], sys.argv[4:])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('root')
+    parser.add_argument('mountpoint')
+    parser.add_argument('fakeroot')
+    parser.add_argument('--foreground', dest='foreground', action='store_true')
+    parser.add_argument('--no-foreground', dest='foreground', action='store_false')
+    parser.add_argument('--fakelstat', dest='fakelstat', action='store_true')
+    parser.add_argument('--no-fakelstat', dest='fakelstat', action='store_false')
+    parser.set_defaults(foreground=True, fakelstat=True)
+    args = parser.parse_args()
+    main(args.mountpoint, args.root, args.fakeroot, args.foreground, args.fakelstat)
