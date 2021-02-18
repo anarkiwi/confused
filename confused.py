@@ -24,7 +24,7 @@ class Confused(Operations):
         return (self._full_path(partial, self.root), self._full_path(partial, self.fakeroot))
 
     def _fake_wrap(self, full_path, fake_path, call_to_fake):
-        if os.path.exists(fake_path) and os.path.isfile(fake_path):
+        if os.path.exists(fake_path) and os.path.isfile(fake_path) or os.path.isdir(fake_path):
             return call_to_fake(fake_path)
         return call_to_fake(full_path)
 
